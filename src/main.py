@@ -12,22 +12,39 @@ from memory import ChatHistory
 CHROMA_PATH = "chroma_db"
 
 def main():
+    # ── Load or build vector store ───────────────────────────────────────────
+    # sys.argv[1:] captures all arguments after the script name.
+    # Example: python main.py file1.pdf file2.pdf file3.pdf
+    # → sys.argv[1:] = ["file1.pdf", "file2.pdf", "file3.pdf"]
+
+    pdf_paths = sys.argv[1:]
     # Step 1: Ingest or load
-    if len(sys.argv) > 1:
-        pdf_path = sys.argv[1]
-        print(f"Ingesting {pdf_path}...")
-        vectorstore = ingest(pdf_path)
+    if pdf_paths:
+        # Ingest each file — duplicates are skipped automatically
+        vectorstore = None
+        for pdf_path in pdf_paths:
+            print(f"\nProcessing: {pdf_path}")
+            vectorstore = ingest(pdf_path)
+
     elif Path(CHROMA_PATH).exists():
         print("Loading existing vector store...")
         vectorstore = load_existing_vectorstore()
     else:
-        print("Usage: python main.py <path_to_pdf>")
+        print("Usage: python main.py <file1.pdf> <file2.pdf> ...")
+        print("       python main.py  (to use existing vector store)")
         sys.exit(1)
     
     # Step 2: Build chain and history
     chain = build_conversational_rag_chain(vectorstore)
     chat_history = ChatHistory()  # Initialize chat history for this session
-    
+
+    # Show which documents are loaded
+    all_docs = vectorstore.get()
+    file_names = set(
+        m.get("file_name", "unknown")
+        for m in all_docs["metadatas"]
+    )
+    print(f"\nDocuments loaded: {', '.join(file_names)}")
     # Step 3: Chat loop
     print("\nReady. Commands: 'quit' to exit, 'clear' to reset conversation.\n")
 

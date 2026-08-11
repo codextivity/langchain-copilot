@@ -1,4 +1,4 @@
-import os
+import hashlib
 from pathlib import Path
 # Third-party integrations (PFD loaders, web scrapers, etc)
 from langchain_community.document_loaders import PyPDFLoader
@@ -10,6 +10,11 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 
 CHROMA_PATH = "chroma_db"
+
+def get_file_hash(file_path: str) -> str:
+    with open(file_path, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()
+    
 
 """
 PyPDfloader does:
@@ -26,14 +31,42 @@ def load_and_split(pdf_path: str) -> list:
     docs = loader.load()  # List[Document], one per page
     
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,      # characters per chunk (not tokens, not words). 1K characters ≈ 200 tokens
-        chunk_overlap=200,    # overlap to avoid cutting context mid-sentence
+        chunk_size=1500,      # characters per chunk (not tokens, not words). 1K characters ≈ 200 tokens
+        chunk_overlap=400,    # overlap to avoid cutting context mid-sentence
         separators=["\n\n", "\n", ".", " "]  # priority order for splitting
     )
     
     chunks = splitter.split_documents(docs) # List[Document], each chunk has page_content and metadata
+
+    # Add the file hash to every chunk's metadata.
+    # This lets us check later whether this exact file
+    # has already been ingested
+    file_hash = get_file_hash(pdf_path)
+    for chunk in chunks:
+        chunk.metadata["file_hash"] = file_hash
+        chunk.metadata["file_name"] = Path(pdf_path).name  # store the original file name for reference
     print(f"Loaded {len(docs)} pages → split into {len(chunks)} chunks")
     return chunks
+
+
+def is_document_already_ingested(vectorstore: Chroma, file_hash: str) -> bool:
+    """
+    Checks if a document with this hash already exists in the vector store.
+
+    How it works:
+    ChromaDB lets you filter by metadata when querying.
+    We search for any chunk that has this file_hash in its metadata.
+    If we find even one, the whole document is already there.
+    """
+    results = vectorstore.get(
+        where={"file_hash": {"$eq": file_hash}},
+        limit=1  # we only need to find one chunk to confirm it exists
+    )
+
+    # results["ids"] is a list of matching chunk IDs
+    # If the list is non-empty, the document exists
+    return len(results["ids"]) > 0
+
 
 """
 What an embedding is:
@@ -88,5 +121,45 @@ def load_existing_vectorstore() -> Chroma:
 
 
 def ingest(pdf_path: str) -> Chroma:
+    """
+    Main ingestion function — idempotent.
+
+    If the vector store does not exist yet: create it.
+    If it exists but this document is new: add the new document.
+    If it exists and this document is already there: skip it.
+
+    This means you can safely run ingest() on the same file
+    multiple times without creating duplicates.
+    """
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    file_hash = get_file_hash(pdf_path)
+    file_name = Path(pdf_path).name
+
+    # Case 1: No vector store exists yet — create from scratch
+    if not Path(CHROMA_PATH).exists():
+        print(f"Creating new vector store...")
+        chunks = load_and_split(pdf_path)
+        return build_vectorstore(chunks)
+
+
+    # Case 2: Vector store exists — load it and check for duplicates
+    vectorstore = Chroma(
+        persist_directory=CHROMA_PATH,
+        embedding_function=embeddings
+    )
+
+    if is_document_already_ingested(vectorstore, file_hash):
+    # Document already exists — skip ingestion entirely
+        print(f"'{file_name}' is already in the vector store. Skipping.")
+        return vectorstore
+
+    # Case 3: Vector store exists but this document is new — add it
+    print(f"Adding '{file_name}' to existing vector store...")
     chunks = load_and_split(pdf_path)
-    return build_vectorstore(chunks)
+
+    # .add_documents() appends to the existing store without touching
+    # the chunks that are already there
+    vectorstore.add_documents(chunks)
+    print(f"Added {len(chunks)} new chunks. Vector store now contains multiple documents.")
+
+    return vectorstore
