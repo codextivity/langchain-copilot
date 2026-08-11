@@ -1,0 +1,25 @@
+# Virtual Environments
+.venv/
+langchain_env/
+venv/
+ENV/
+env/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch & Deep Learning artifacts
+*.pt
+*.pth
+*.ckpt
+.ipynb_checkpoints/
+
+# IDEs and Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
