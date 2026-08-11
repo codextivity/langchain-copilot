@@ -4,7 +4,7 @@ langchain_env/
 venv/
 ENV/
 env/
-
+.env
 # Python cache and compiled files
 __pycache__/
 *.py[cod]
