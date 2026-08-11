@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from ingestion import ingest, load_existing_vectorstore
-from chain import build_rag_chain
+from chain import build_conversational_rag_chain
+from memory import ChatHistory
 
 CHROMA_PATH = "chroma_db"
 
@@ -23,36 +24,51 @@ def main():
         print("Usage: python main.py <path_to_pdf>")
         sys.exit(1)
     
-    # Step 2: Build chain
-    chain = build_rag_chain(vectorstore)
+    # Step 2: Build chain and history
+    chain = build_conversational_rag_chain(vectorstore)
+    chat_history = ChatHistory()  # Initialize chat history for this session
     
     # Step 3: Chat loop
-    print("\nReady. Ask questions about your document. Type 'quit' to exit.\n")
+    print("\nReady. Commands: 'quit' to exit, 'clear' to reset conversation.\n")
+
     while True:
         question = input("You: ").strip()
+        
         if question.lower() in ("quit", "exit", "q"):
             break
+
+        if question.lower() == "clear":
+            chat_history.clear()
+            print("Conversation history cleared.")
+            continue
+
         if not question:
             continue
             
-        print("\nAssistant: ", end="", flush=True)
-        
-        # Stream the response token by token
-        """
-        Why we use chain.stream() instead of just calling chain.invoke()?
-        chain.invoke() would return the entire answer at once, which can be slow for long responses.
-        chain.stream() allows us to get the answer token by token, so we can print it as it comes in,
-        giving a more interactive feel.
+          # Add the user's question to history BEFORE calling the chain.
+        # This ensures the history is complete when the chain reads it.
+        chat_history.add_user_message(question)
 
-        The flush=True argument ensures that each token is printed immediately, rather than being buffered.
-        end="" prevents adding a newline after each token, so the answer appears on the same line.
-
-        The "chunk" variable represents each piece of the answer as it is generated. We print it immediately to the console.
-        """
-        for chunk in chain.stream(question):
-            print(chunk, end="", flush=True)
+        # ── Invoke the chain ─────────────────────────────────────────────────
+        # We use invoke instead of stream here because create_retrieval_chain
+        # returns a dict — streaming dicts requires extra handling we will
+        # add in Week 6 when we move to FastAPI.
+        #
+        # The chain expects exactly these two keys:
+        #   "input"        — the current question
+        #   "chat_history" — all previous messages
         
-        print("\n")
+        # ── Invoke the chain ─────────────────────────────────────────────────
+        # Chain now returns a plain string — no dict unpacking needed
+        answer = chain.invoke({
+            "input": question,
+            "chat_history": chat_history.get_messages()
+        })
+
+        print(f"\nAssistant: {answer}\n")
+
+        # Add AI answer to history after receiving it
+        chat_history.add_ai_message(answer)
 
 if __name__ == "__main__":
     main()
