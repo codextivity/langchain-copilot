@@ -1,9 +1,8 @@
 ## Live Demos
 
 | Platform | URL | Notes |
-|---|---|---|
-| Render | https://langchain-research-copilot.onrender.com/docs | REST API |
-| Hugging Face | https://YOUR_HF_USERNAME-langchain-research-copilot.hf.space/docs | ML community |
+| --- | --- | --- |
+| Render | https://langchain-copilot.onrender.com/docs | REST API |
 
 ---
 
@@ -21,17 +20,9 @@
 
 ### Option 2: Hugging Face Spaces
 
-1. Fork this repository
-2. Go to https://huggingface.co → New Space → Docker
-3. Push your code to the Space repository
-4. Add secrets from `.env.example` in Space settings
-5. Set `CHROMA_PATH=/data/chroma_db` as a variable
-
-### Option 3: Docker (local)
-
 ```bash
-git clone https://github.com/YOUR_USERNAME/langchain-research-copilot
-cd langchain-research-copilot
+git clone https://github.com/YOUR_USERNAME/langchain-copilot
+cd langchain-copilot
 cp .env.example .env
 # Fill in your API keys
 docker-compose up
