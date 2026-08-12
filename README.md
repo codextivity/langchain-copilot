@@ -18,7 +18,7 @@
 6. Add environment variables from `.env.example`
 7. Set `CHROMA_PATH=chroma_db`
 
-### Option 2: Hugging Face Spaces
+### Option 2: Docker (local)
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/langchain-copilot
