@@ -12,6 +12,7 @@
 from pydantic_settings import BaseSettings
 from pathlib import Path
 
+ENV_FILE_PATH = Path(__file__).parent.parent / ".env"
 class Settings(BaseSettings):
     # ── LLM settings ─────────────────────────────────────────────────────────
     openai_api_key: str           # Required — app will not start without this
@@ -34,11 +35,11 @@ class Settings(BaseSettings):
     chunk_size: int = 1500
     chunk_overlap: int = 400
 
-    class Config:
-        # Tells pydantic-settings to read from .env file automatically
-        env_file = ".env"
-        # Allows extra fields in .env without raising validation errors
-        extra = "ignore"
+    model_config = {
+        "env_file": str(ENV_FILE_PATH),
+        "extra": "ignore",
+        "case_sensitive": False,
+    }
 
 # Create a single instance used across the entire application.
 # Import this object wherever you need a setting:
