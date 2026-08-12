@@ -1,3 +1,5 @@
+# conversational RAG
+
 # Written for LangChain 1.3.x using pure LCEL — no legacy chain helpers.
 # This is actually the preferred modern approach in 1.3+.
 

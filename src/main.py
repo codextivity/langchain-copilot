@@ -1,3 +1,5 @@
+# ✅ CLI interface
+
 import os
 import sys
 from pathlib import Path
@@ -7,6 +9,7 @@ load_dotenv()
 
 from ingestion import ingest, load_existing_vectorstore
 from chain import build_conversational_rag_chain
+from agent import build_research_agent, run_agent
 from memory import ChatHistory
 
 CHROMA_PATH = "chroma_db"
@@ -35,8 +38,15 @@ def main():
         sys.exit(1)
     
     # Step 2: Build chain and history
-    chain = build_conversational_rag_chain(vectorstore)
-    chat_history = ChatHistory()  # Initialize chat history for this session
+    # chain = build_conversational_rag_chain(vectorstore)
+    # chat_history = ChatHistory()  # Initialize chat history for this session
+
+    # ── Build agent with document access ─────────────────────────────────────
+    # Note: we now pass vectorstore to the agent
+    # so it can retrieve document context on every question
+    agent = build_research_agent(vectorstore)
+    chat_history = ChatHistory()
+
 
     # Show which documents are loaded
     all_docs = vectorstore.get()
@@ -77,10 +87,11 @@ def main():
         
         # ── Invoke the chain ─────────────────────────────────────────────────
         # Chain now returns a plain string — no dict unpacking needed
-        answer = chain.invoke({
-            "input": question,
-            "chat_history": chat_history.get_messages()
-        })
+        # answer = chain.invoke({
+        #     "input": question,
+        #     "chat_history": chat_history.get_messages()
+        # })
+        answer = run_agent(agent, question, chat_history.get_messages()[:-1])
 
         print(f"\nAssistant: {answer}\n")
 

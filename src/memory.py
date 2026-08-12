@@ -1,3 +1,6 @@
+
+#  ✅ chat history
+
 # src/memory.py
 # Manages conversation history for a single chat session.
 # Right now this is in-memory (lost when the script ends).

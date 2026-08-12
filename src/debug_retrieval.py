@@ -1,3 +1,5 @@
+# ✅ diagnostic tool
+
 # src/debug_retrieval.py
 
 from dotenv import load_dotenv

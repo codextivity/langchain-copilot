@@ -1,3 +1,4 @@
+# idempotent multi-document ingestion pipeline for PDFs
 import hashlib
 from pathlib import Path
 # Third-party integrations (PFD loaders, web scrapers, etc)
