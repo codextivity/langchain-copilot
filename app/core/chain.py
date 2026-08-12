@@ -7,6 +7,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda, RunnableBranch
 from langchain_openai import ChatOpenAI
+from app.config import settings
 
 # ── Prompt 1: Question rewriter ──────────────────────────────────────────────
 # Only used when chat_history is non-empty.
@@ -103,7 +104,7 @@ def build_conversational_rag_chain(vectorstore):
     {"answer": str, "context": List[Document], "input": str}
     """
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=settings.openai_api_key)
 
     retriever = vectorstore.as_retriever(
         search_type="similarity",

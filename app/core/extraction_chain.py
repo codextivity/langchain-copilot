@@ -13,7 +13,8 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnableLambda
-from schemas import GDPDataPoint, EconomicSummary, DocumentInsight
+from app.core.schemas import GDPDataPoint, EconomicSummary, DocumentInsight
+from app.config import settings
 
 # ── Extraction prompt ────────────────────────────────────────────────────────
 # This prompt is different from the RAG answer prompt in one key way:
@@ -76,7 +77,7 @@ def build_extraction_chain(vectorstore, schema_class):
     You do not need a separate function for each data type.
     """
 
-    llm = ChatOpenAI(model="gpt-4o", temperature=0)
+    llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=settings.openai_api_key)
     # Note: using gpt-4o here instead of gpt-4o-mini.
     # Structured extraction requires precise instruction following.
     # gpt-4o-mini sometimes drops optional fields or misformats numbers.

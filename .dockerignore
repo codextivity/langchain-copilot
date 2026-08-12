@@ -1,0 +1,21 @@
+# .dockerignore
+# Files excluded from the Docker build context.
+# Keeps the image small and prevents secrets from leaking into the image.
+
+.env
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info
+.venv
+venv
+langchain_env
+chroma_db
+data
+src/
+*.md
+.github

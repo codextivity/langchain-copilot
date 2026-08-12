@@ -9,7 +9,9 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 from langgraph.graph.message import add_messages
-from tools import calculator, get_current_date, compute_growth_rate, web_search
+from app.core.tools import calculator, get_current_date, compute_growth_rate, web_search
+
+from app.config import settings
 
 class AgentState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
@@ -63,7 +65,7 @@ def build_research_agent(vectorstore):
     """
     tools = [calculator, get_current_date, compute_growth_rate, web_search]
 
-    llm = ChatOpenAI(model="gpt-4o", temperature=0)
+    llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=settings.openai_api_key)
     llm_with_tools = llm.bind_tools(tools)
 
     # Build retriever to fetch relevant document context
