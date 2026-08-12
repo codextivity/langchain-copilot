@@ -27,3 +27,11 @@ cp .env.example .env
 # Fill in your API keys
 docker-compose up
 ```
+
+## Live Demo
+
+| URL | Description |
+|---|---|
+| https://langchain-copilot.onrender.com | Redirects to API docs |
+| https://langchain-copilot.onrender.com/docs | Interactive API documentation |
+| https://langchain-copilot.onrender.com/health | Service health check |
